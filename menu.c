@@ -1,0 +1,454 @@
+#include <stdio.h>
+#include <string.h>
+
+#define MAX      10     /*capacidade maxima do vetor*/
+#define ANO_MIN  1950   /*primeiro ano aceito*/
+#define ANO_MAX  2026   /*ultimo ano aceito*/
+
+struct Musica {
+    int  id;           
+    char titulo[100];  
+    char artista[80];  /* conta como banda tbm*/
+    char album[80];    /* nome*/
+    int  ano;          /* ano de lancamento*/
+    char genero[50];   
+    int  duracao;      /*em sec*/
+};
+
+
+int main() {
+
+
+
+    struct Musica musicas[MAX]; 
+    int  total      = 0;       
+    int  opcao      = -1;      /*opcao selecionada no menu*/
+    int  i, id, pos;           /* auxiliares de iteracao/busca*/
+    int  encontrado = 0;       /*flag e indice de busca */
+    int  durMin     = 0;       /* duracao em min*/
+    int  durSec     = 0;       /* duracao em sec*/
+    int  novoAno    = 0;       /* ano informado na atualizacao*/
+    char temp[100];            /* buffer temporario de strings*/
+    char resp       = 'n';     /* resposta s/n do usuario*/
+
+/*parte visual do menu*/
+    printf("\n");
+    printf("  ====================================================\n");
+    printf("        SISTEMA DE GERENCIAMENTO DE MUSICAS         \n");
+    printf("  ====================================================\n");
+
+
+    do {
+        printf("\n");
+        printf("  +----------------------------------------------------+\n");
+        printf("  |                  MENU PRINCIPAL                    |\n");
+        printf("  +----------------------------------------------------+\n");
+        printf("  |  1 - Cadastrar nova musica                         |\n");
+        printf("  |  2 - Listar todas as musicas                       |\n");
+        printf("  |  3 - Buscar musica por ID                          |\n");
+        printf("  |  4 - Atualizar dados de uma musica                 |\n");
+        printf("  |  5 - Remover uma musica                            |\n");
+        printf("  |  0 - Sair do sistema                               |\n");
+        printf("  +----------------------------------------------------+\n");
+        printf("  Opcao: ");
+
+        if (scanf("%d", &opcao) != 1) {
+            while (getchar() != '\n');
+            opcao = -1;
+        } else {
+            while (getchar() != '\n');
+        }
+
+        switch (opcao) {
+
+        /* ============================================================
+         *  OPCAO 1 — CADASTRAR MUSICA
+         *
+         *Verifica se ha espaco disponivel no vetor
+         *  - Valida o ID: deve ser inteiro positivo e unico
+         *  - Valida todos os campos de texto (nao permite vazio)
+         *  - Valida ano dentro do intervalo definido
+         *  - Valida minutos (0-99) e segundos (0-59) separadamente
+         * ============================================================ */
+        case 1:
+
+            if (total >= MAX) {
+                printf("\n  [ERRO] Limite de %d registros atingido.", MAX);
+                printf(" Remova uma musica para continuar.\n");
+                break;
+            }
+
+            printf("\n  ============== CADASTRAR MUSICA ==============\n");
+
+            /*validar o id*/
+            id = 0;
+            encontrado = 0;
+            do {
+                printf("  ID (inteiro positivo): ");
+                if (scanf("%d", &id) != 1 || id <= 0) {
+                    printf("  [ERRO] ID invalido. Use um inteiro maior que zero.\n");
+                    while (getchar() != '\n');
+                    id = 0;
+                    encontrado = 0;
+                    continue;
+                }
+                while (getchar() != '\n');
+
+                /*verifica duplicidade percorrendo o vetor*/
+                encontrado = 0;
+                for (i = 0; i < total; i++) {
+                    if (musicas[i].id == id) {
+                        encontrado = 1;
+                        break;
+                    }
+                }
+                if (encontrado) {
+                    printf("  [ERRO] ID %d ja esta em uso. Escolha outro.\n", id);
+                    id = 0;
+                }
+            } while (id <= 0 || encontrado);
+
+            musicas[total].id = id;
+
+            /*titulo*/
+            do {
+                printf("  Titulo da musica: ");
+                fgets(musicas[total].titulo, sizeof(musicas[total].titulo), stdin);
+                musicas[total].titulo[strcspn(musicas[total].titulo, "\n")] = '\0';
+                if (strlen(musicas[total].titulo) == 0)
+                    printf("  [ERRO] O titulo nao pode ser vazio.\n");
+            } while (strlen(musicas[total].titulo) == 0);
+
+            /*artista*/
+            do {
+                printf("  Artista / Banda: ");
+                fgets(musicas[total].artista, sizeof(musicas[total].artista), stdin);
+                musicas[total].artista[strcspn(musicas[total].artista, "\n")] = '\0';
+                if (strlen(musicas[total].artista) == 0)
+                    printf("  [ERRO] O nome do artista nao pode ser vazio.\n");
+            } while (strlen(musicas[total].artista) == 0);
+
+            /*album*/
+            do {
+                printf("  Album: ");
+                fgets(musicas[total].album, sizeof(musicas[total].album), stdin);
+                musicas[total].album[strcspn(musicas[total].album, "\n")] = '\0';
+                if (strlen(musicas[total].album) == 0)
+                    printf("  [ERRO] O nome do album nao pode ser vazio.\n");
+            } while (strlen(musicas[total].album) == 0);
+
+            /*no de lancamento*/
+            musicas[total].ano = 0;
+            do {
+                printf("  Ano de lancamento (%d-%d): ", ANO_MIN, ANO_MAX);
+                if (scanf("%d", &musicas[total].ano) != 1) {
+                    printf("  [ERRO] Valor invalido. Digite um ano.\n");
+                    while (getchar() != '\n');
+                    musicas[total].ano = 0;
+                    continue;
+                }
+                while (getchar() != '\n');
+                if (musicas[total].ano < ANO_MIN || musicas[total].ano > ANO_MAX) {
+                    printf("  [ERRO] Ano invalido. Use entre %d e %d.\n",
+                           ANO_MIN, ANO_MAX);
+                    musicas[total].ano = 0;
+                }
+            } while (musicas[total].ano == 0);
+
+            /*genero musical*/
+            do {
+                printf("  Genero (ex: Rock, Pop, Jazz, Sertanejo): ");
+                fgets(musicas[total].genero, sizeof(musicas[total].genero), stdin);
+                musicas[total].genero[strcspn(musicas[total].genero, "\n")] = '\0';
+                if (strlen(musicas[total].genero) == 0)
+                    printf("  [ERRO] O genero nao pode ser vazio.\n");
+            } while (strlen(musicas[total].genero) == 0);
+
+            /*duracao: minutos e segundos validados separadamente*/
+            durMin = -1;
+            do {
+                printf("  Duracao - minutos (0-99): ");
+                if (scanf("%d", &durMin) != 1 || durMin < 0 || durMin > 99) {
+                    printf("  [ERRO] Valor invalido. Minutos: 0 a 99.\n");
+                    while (getchar() != '\n');
+                    durMin = -1;
+                    continue;
+                }
+                printf("  Duracao - segundos (0-59): ");
+                if (scanf("%d", &durSec) != 1 || durSec < 0 || durSec > 59) {
+                    printf("  [ERRO] Valor invalido. Segundos: 0 a 59.\n");
+                    while (getchar() != '\n');
+                    durMin = -1;
+                    continue;
+                }
+                while (getchar() != '\n');
+            } while (durMin < 0);
+
+            musicas[total].duracao = durMin * 60 + durSec;
+            total++;
+
+            printf("\n  [OK] Musica cadastrada com sucesso! Registros: %d/%d\n",
+                   total, MAX);
+            break;
+
+        /*  OPCAO 2 — LISTAR TODAS AS MUSICAS
+         *
+         *  - Bloqueia operacao se nao houver registros
+         *  - Exibe todos os campos de cada registro
+         *  - Mostra duracao no formato MM:SS
+ */
+        case 2:
+
+            if (total == 0) {
+                printf("\n  [AVISO] Nenhuma musica cadastrada ainda.\n");
+                break;
+            }
+
+            printf("\n  =========== LISTA DE MUSICAS (%d/%d) ===========\n",
+                   total, MAX);
+
+            for (i = 0; i < total; i++) {
+                printf("\n");
+                printf("  --- Registro %d de %d ---\n", i + 1, total);
+                printf("  ID      : %d\n",  musicas[i].id);
+                printf("  Titulo  : %s\n",  musicas[i].titulo);
+                printf("  Artista : %s\n",  musicas[i].artista);
+                printf("  Album   : %s\n",  musicas[i].album);
+                printf("  Ano     : %d\n",  musicas[i].ano);
+                printf("  Genero  : %s\n",  musicas[i].genero);
+                printf("  Duracao : %02d:%02d\n",
+                       musicas[i].duracao / 60,
+                       musicas[i].duracao % 60);
+                printf("  -----------------------------------------------\n");
+            }
+            break;
+
+        /* OPCAO 3 — BUSCAR MUSICA POR ID
+         *
+         *  - Bloqueia operacao se nao houver registros
+         *  - Valida a entrada do ID
+         *  - Percorre o vetor procurando o ID informado
+         *  - Exibe detalhes completos se encontrado*/
+        case 3:
+
+            if (total == 0) {
+                printf("\n  [AVISO] Nenhuma musica cadastrada ainda.\n");
+                break;
+            }
+
+            printf("\n  ============== BUSCAR MUSICA ==============\n");
+            printf("  ID da musica: ");
+
+            if (scanf("%d", &id) != 1) {
+                printf("  [ERRO] Valor invalido.\n");
+                while (getchar() != '\n');
+                break;
+            }
+            while (getchar() != '\n');
+
+            /*busca linear no vetor*/
+            encontrado = -1;
+            for (i = 0; i < total; i++) {
+                if (musicas[i].id == id) {
+                    encontrado = i;
+                    break;
+                }
+            }
+
+            if (encontrado == -1) {
+                printf("  [ERRO] Nenhuma musica com ID %d foi encontrada.\n", id);
+            } else {
+                printf("\n");
+                printf("  +------------------------------------------+\n");
+                printf("  |          DETALHES DA MUSICA              |\n");
+                printf("  +------------------------------------------+\n");
+                printf("  ID      : %d\n",  musicas[encontrado].id);
+                printf("  Titulo  : %s\n",  musicas[encontrado].titulo);
+                printf("  Artista : %s\n",  musicas[encontrado].artista);
+                printf("  Album   : %s\n",  musicas[encontrado].album);
+                printf("  Ano     : %d\n",  musicas[encontrado].ano);
+                printf("  Genero  : %s\n",  musicas[encontrado].genero);
+                printf("  Duracao : %02d:%02d\n",
+                       musicas[encontrado].duracao / 60,
+                       musicas[encontrado].duracao % 60);
+                printf("  +------------------------------------------+\n");
+            }
+            break;
+
+        /*OPCAO 4 — ATUALIZAR MUSICA
+         *
+         *  - Bloqueia operacao se nao houver registros
+         *  - Localiza o registro pelo ID informado
+         *  - ENTER sem digitar nada mantem o valor atual (strings)
+         *  - Digitar 0 no campo Ano mantem o valor atual
+         *  - Valida novos valores antes de aplicar*/
+        case 4:
+
+            if (total == 0) {
+                printf("\n  [AVISO] Nenhuma musica cadastrada ainda.\n");
+                break;
+            }
+
+            printf("\n  ============== ATUALIZAR MUSICA ==============\n");
+            printf("  ID da musica a atualizar: ");
+
+            if (scanf("%d", &id) != 1) {
+                printf("  [ERRO] Valor invalido.\n");
+                while (getchar() != '\n');
+                break;
+            }
+            while (getchar() != '\n');
+
+            pos = -1;
+            for (i = 0; i < total; i++) {
+                if (musicas[i].id == id) {
+                    pos = i;
+                    break;
+                }
+            }
+
+            if (pos == -1) {
+                printf("  [ERRO] Nenhuma musica com ID %d foi encontrada.\n", id);
+                break;
+            }
+
+            printf("\n  Musica encontrada: \"%s\" - %s\n",
+                   musicas[pos].titulo, musicas[pos].artista);
+            printf("  (Pressione ENTER para manter o valor atual)\n\n");
+
+            /*novo titulo*/
+            printf("  Titulo [%s]: ", musicas[pos].titulo);
+            fgets(temp, sizeof(temp), stdin);
+            temp[strcspn(temp, "\n")] = '\0';
+            if (strlen(temp) > 0) strcpy(musicas[pos].titulo, temp);
+
+            /*novo artista*/
+            printf("  Artista [%s]: ", musicas[pos].artista);
+            fgets(temp, sizeof(temp), stdin);
+            temp[strcspn(temp, "\n")] = '\0';
+            if (strlen(temp) > 0) strcpy(musicas[pos].artista, temp);
+
+            /*novo album*/
+            printf("  Album [%s]: ", musicas[pos].album);
+            fgets(temp, sizeof(temp), stdin);
+            temp[strcspn(temp, "\n")] = '\0';
+            if (strlen(temp) > 0) strcpy(musicas[pos].album, temp);
+
+            /*novo ano (0 = manter o atual)*/
+            novoAno = 0;
+            printf("  Ano [%d] (0 para manter): ", musicas[pos].ano);
+            if (scanf("%d", &novoAno) == 1 && novoAno != 0) {
+                if (novoAno >= ANO_MIN && novoAno <= ANO_MAX)
+                    musicas[pos].ano = novoAno;
+                else
+                    printf("  [AVISO] Ano fora do intervalo valido. Valor mantido.\n");
+            }
+            while (getchar() != '\n');
+
+            /*novo genero*/
+            printf("  Genero [%s]: ", musicas[pos].genero);
+            fgets(temp, sizeof(temp), stdin);
+            temp[strcspn(temp, "\n")] = '\0';
+            if (strlen(temp) > 0) strcpy(musicas[pos].genero, temp);
+
+            /*nova duracao (opcional)*/
+            printf("  Atualizar duracao? (s/n): ");
+            scanf("%c", &resp);
+            while (getchar() != '\n');
+
+            if (resp == 's' || resp == 'S') {
+                durMin = -1;
+                do {
+                    printf("  Minutos (0-99): ");
+                    if (scanf("%d", &durMin) != 1 || durMin < 0 || durMin > 99) {
+                        printf("  [ERRO] Valor invalido. Minutos: 0 a 99.\n");
+                        while (getchar() != '\n');
+                        durMin = -1;
+                        continue;
+                    }
+                    printf("  Segundos (0-59): ");
+                    if (scanf("%d", &durSec) != 1 || durSec < 0 || durSec > 59) {
+                        printf("  [ERRO] Valor invalido. Segundos: 0 a 59.\n");
+                        while (getchar() != '\n');
+                        durMin = -1;
+                        continue;
+                    }
+                    while (getchar() != '\n');
+                } while (durMin < 0);
+
+                musicas[pos].duracao = durMin * 60 + durSec;
+            }
+
+            printf("\n  [OK] Musica atualizada com sucesso!\n");
+            break;
+
+        /*
+         *  OPCAO 5 — REMOVER MUSICA
+         *
+         *  - Bloqueia operacao se nao houver registros
+         *  - Localiza o registro pelo ID informado
+         *  - Pede confirmacao antes de remover
+         *  - Desloca os registros seguintes para fechar a lacuna
+         *  - Decrementa o contador de registros*/
+        case 5:
+
+            if (total == 0) {
+                printf("\n  [AVISO] Nenhuma musica cadastrada ainda.\n");
+                break;
+            }
+
+            printf("\n  ============== REMOVER MUSICA ==============\n");
+            printf("  ID da musica a remover: ");
+
+            if (scanf("%d", &id) != 1) {
+                printf("  [ERRO] Valor invalido.\n");
+                while (getchar() != '\n');
+                break;
+            }
+            while (getchar() != '\n');
+
+            pos = -1;
+            for (i = 0; i < total; i++) {
+                if (musicas[i].id == id) {
+                    pos = i;
+                    break;
+                }
+            }
+
+            if (pos == -1) {
+                printf("  [ERRO] Nenhuma musica com ID %d foi encontrada.\n", id);
+                break;
+            }
+
+            printf("  Confirmar remocao de \"%s\" - %s? (s/n): ",
+                   musicas[pos].titulo, musicas[pos].artista);
+            scanf("%c", &resp);
+            while (getchar() != '\n');
+
+            if (resp == 's' || resp == 'S') {
+                /*desloca os registros seguintes para fechar a lacuna*/
+                for (i = pos; i < total - 1; i++) {
+                    musicas[i] = musicas[i + 1];
+                }
+                total--;
+                printf("  [OK] Musica removida. Registros restantes: %d/%d\n",
+                       total, MAX);
+            } else {
+                printf("  [INFO] Operacao cancelada.\n");
+            }
+            break;
+
+        /*OPCAO 0 — SAIR DO SISTEMA*/
+        case 0:
+            printf("\n  Sistema encerrado. Ate mais!\n\n");
+            break;
+
+        /*DEFAULT — OPCAO INVALIDA*/
+        default:
+            printf("\n  [ERRO] Opcao invalida. Escolha um valor entre 0 e 5.\n");
+        }
+
+    } while (opcao != 0);
+
+    return 0;
+}
